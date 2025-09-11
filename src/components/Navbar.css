@@ -5,8 +5,9 @@
   padding: 20px 4%;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: center; /* centers vertically */
   z-index: 1000;
+  position: relative; /* needed for absolute positioning of mobile menu */
 }
 
 .logo-container {
@@ -106,4 +107,126 @@
 
 .suggestions-list li:hover {
   background-color: #f0f0f0;
+}
+
+/* ---------------- Mobile / Small Screens ---------------- */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 4%;
+  }
+
+  .logo-container {
+    margin-left: 0; /* remove left margin on small screens */
+    gap: 10px;
+  }
+
+  .logo-text {
+    font-size: 24px;
+  }
+
+  .nav-right {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    align-items: center;
+  }
+
+  .navbar a {
+    font-size: 16px;
+  }
+
+  .search-bar {
+    width: 90%;
+    max-width: 250px;
+  }
+
+  .suggestions-list {
+    width: 90%;
+    max-width: 250px;
+  }
+}
+
+/* Optional: slightly bigger tablets */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .logo-text {
+    font-size: 26px;
+  }
+
+  .navbar a {
+    font-size: 17px;
+  }
+
+  .search-bar {
+    width: 200px;
+  }
+
+  .suggestions-list {
+    width: 200px;
+  }
+}
+
+
+/* Hamburger button - hidden on desktop */
+.mobile-toggle {
+  display: none;
+  font-size: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  align-self: center; /* ensures it aligns with logo */
+  padding: 0;
+  margin: 0;
+  line-height: 1; /* prevent extra height */
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .mobile-toggle {
+    display: block;
+    position: absolute;
+    right: 20px;
+    top: 25px;
+    z-index: 300;
+  }
+
+  .nav-right {
+    display: none; /* hide by default on mobile */
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    background: white;
+    position: absolute;
+    top: 70px; /* below header */
+    left: 0;
+    padding: 15px 20px;
+    border-top: 1px solid #ccc;
+    z-index: 200;
+  }
+
+  .nav-right.open {
+    display: flex; /* show menu when open */
+  }
+
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .search-bar {
+    width: 100%;
+  }
+
+  .suggestions-list {
+    width: 100%;
+  }
 }

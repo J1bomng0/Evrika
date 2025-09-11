@@ -11,7 +11,7 @@
 
 .footer .row {
     width: 80%;
-    margin-left: 210px;
+    margin: 0 auto; /* center the row */
     display: flex;
     justify-content: space-between; 
     flex-wrap: wrap;
@@ -40,7 +40,7 @@
 
 .footer p {
     margin: 5px 0;
-    font-size: 20px;
+    font-size: 18px; /* slightly smaller on mobile */
     color: #ccc;
 }
 
@@ -61,18 +61,72 @@
     transform: scale(1.2);
 }
 
+/* ---------------- Tablets / Medium Screens ---------------- */
+@media (max-width: 1024px) {
+    .footer .row {
+        width: 90%;
+    }
 
+    .footer h3 {
+        font-size: 22px;
+    }
+
+    .footer p {
+        font-size: 16px;
+    }
+
+    .icon {
+        font-size: 24px;
+    }
+}
+
+/* ---------------- Small Screens / Mobile ---------------- */
 @media (max-width: 768px) {
     .footer .row {
         flex-direction: column;
         align-items: center;
+        text-align: center;
     }
 
     .footer .col {
         margin: 15px 0;
+        flex-basis: 100%;
     }
 
     .social-icons {
         justify-content: center;
+    }
+
+    .footer h3 {
+        font-size: 20px;
+    }
+
+    .footer p {
+        font-size: 16px;
+    }
+
+    .icon {
+        font-size: 22px;
+    }
+}
+
+/* ---------------- Extra Small Screens / Phones ---------------- */
+@media (max-width: 480px) {
+    .footer {
+        padding: 40px 0 20px;
+        font-size: 16px;
+        line-height: 18px;
+    }
+
+    .footer h3 {
+        font-size: 18px;
+    }
+
+    .footer p {
+        font-size: 14px;
+    }
+
+    .icon {
+        font-size: 20px;
     }
 }

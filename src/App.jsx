@@ -5,7 +5,6 @@ import Infos from './pages/Infos.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
-import SearchResults from './components/SearchResults.jsx';
 import { Routes, Route } from "react-router-dom";
 import StudyPath from './components/StudyPath.jsx';
 import Navbar from './components/Navbar.jsx';
@@ -19,7 +18,6 @@ function App() {
       <Route path="/studypath" element={<StudyPath />} />
       <Route path="/category/:slug" element={<NotesList />} />
       <Route path="/category/:slug/:noteId" element={<Infos />} />
-      <Route path="/search" element={<SearchResults />} />
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={ <ProtectedRoute><Dashboard /></ProtectedRoute>}/>
     </Routes>

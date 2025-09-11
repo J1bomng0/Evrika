@@ -61,3 +61,69 @@ body {
   text-decoration: underline;
 }
 
+/* ---------------- Tablets / Medium Screens ---------------- */
+@media (max-width: 1024px) {
+  .info-title {
+    font-size: 1.8rem;
+  }
+
+  .info-text {
+    font-size: 0.95rem;
+  }
+
+  .info-links h3 {
+    font-size: 1.1rem;
+  }
+
+  .info-links a {
+    font-size: 0.95rem;
+  }
+}
+
+/* ---------------- Small Screens / Mobile ---------------- */
+@media (max-width: 768px) {
+  .info-container {
+    margin: 50px 15px;
+    padding: 15px;
+  }
+
+  .info-title {
+    font-size: 1.5rem;
+  }
+
+  .info-text {
+    font-size: 0.9rem;
+  }
+
+  .info-links h3 {
+    font-size: 1rem;
+  }
+
+  .info-links a {
+    font-size: 0.9rem;
+  }
+}
+
+/* ---------------- Extra Small Screens / Phones ---------------- */
+@media (max-width: 480px) {
+  .info-container {
+    margin: 40px 10px;
+    padding: 10px;
+  }
+
+  .info-title {
+    font-size: 1.3rem;
+  }
+
+  .info-text {
+    font-size: 0.85rem;
+  }
+
+  .info-links h3 {
+    font-size: 0.95rem;
+  }
+
+  .info-links a {
+    font-size: 0.85rem;
+  }
+}

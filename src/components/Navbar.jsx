@@ -7,6 +7,7 @@ import './Navbar.css'
 const Navbar = () => {
   const [query, setQuery] = useState("")
   const [suggestions, setSuggestions] = useState([])
+  const [mobileOpen, setMobileOpen] = useState(false) // mobile toggle
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -16,7 +17,6 @@ const Navbar = () => {
         return
       }
 
-      // Firestore query: assuming your collection is called "notes" and has "title" field
       const q = query(
         collection(db, "notes"),
         where("title", ">=", query),
@@ -34,8 +34,7 @@ const Navbar = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault()
     if (query.trim() !== "") {
-      // redirect to Infos page with the note ID if you want
-      const match = suggestions[0] // take the first match by default
+      const match = suggestions[0]
       if (match) {
         navigate(`/infos/${match.id}`)
       }
@@ -44,8 +43,9 @@ const Navbar = () => {
 
   const handleSuggestionClick = (id) => {
     navigate(`/infos/${id}`)
-    setQuery("") // clear input
+    setQuery("")
     setSuggestions([])
+    setMobileOpen(false)
   }
 
   return (
@@ -55,7 +55,12 @@ const Navbar = () => {
         <a href="/" className="logo-text">ევრიკა</a>
       </div>
 
-      <div className="nav-right">
+      {/* Hamburger button for mobile */}
+      <button className="mobile-toggle" onClick={() => setMobileOpen(!mobileOpen)}>
+        ☰
+      </button>
+
+      <div className={`nav-right ${mobileOpen ? 'open' : ''}`}>
         <form onSubmit={handleSearchSubmit} className='search-bar'>
           <input
             type="text"
@@ -65,7 +70,6 @@ const Navbar = () => {
           />
         </form>
 
-        {/* Suggestions dropdown */}
         {suggestions.length > 0 && (
           <ul className="suggestions-list">
             {suggestions.map((s) => (
