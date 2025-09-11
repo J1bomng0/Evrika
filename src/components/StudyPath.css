@@ -112,6 +112,7 @@
     width: 55%;                /* smaller to fit screen */
     max-width: 170px;
     height: auto;
+    margin-left: 30px;
   }
 
   .arrow {
