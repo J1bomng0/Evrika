@@ -1,0 +1,63 @@
+/* General page background */
+body {
+  margin: 0;
+  font-family: "Noto Sans Georgian", sans-serif; /* for Georgian readability */
+  background-color: #D9CFCB;
+  color: #1a1a1a;
+}
+
+/* Container for content */
+.info-container {
+  max-width: 800px;
+  margin: 80px auto; /* centers content and adds spacing from navbar */
+  padding: 20px;
+  line-height: 1.8;
+}
+
+/* Title */
+.info-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 25px;
+  color: #000;
+}
+
+/* Paragraph text */
+.info-text {
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: left;
+  margin-bottom: 30px;
+}
+
+/* Links section */
+.info-links {
+  margin-top: 30px;
+}
+
+.info-links h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-decoration: underline;
+}
+
+.info-links ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.info-links li {
+  margin-bottom: 8px;
+}
+
+.info-links a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.info-links a:hover {
+  text-decoration: underline;
+}
+

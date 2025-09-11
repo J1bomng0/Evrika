@@ -1,0 +1,19 @@
+@font-face {
+    font-family: 'GeoFont';
+    src: url('./assets/archyedt-bold.otf') format('truetype');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'GeoFont', serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}
