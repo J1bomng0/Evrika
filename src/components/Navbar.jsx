@@ -51,7 +51,7 @@ const Navbar = () => {
   return (
     <header className="header">
       <div className="logo-container">
-        <img src={`${import.meta.env.BASE_URL}images/logo-removebg-preview.png`} alt="logo" />
+        <img src={`${import.meta.env.BASE_URL}images/logo-removebg-preview.png`} alt="logo" className="logo" />
         <a href="/" className="logo-text">ევრიკა</a>
       </div>
 

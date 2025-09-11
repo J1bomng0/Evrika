@@ -8,13 +8,13 @@ const StudyPath = () => {
       <div className="arrow-container left">
         <div className="arrow"><a href="./">←</a></div>
         <div className="arrow-text">
-          <p>დაუბრუნდი სწავლას</p>
+          <p>მარჯვნივ სწავლას დაუბრუნდი</p>
         </div>
       </div>
 
       {/* Image */}
       <div className="image-container">
-        <img src="/images/path.jpg" alt="Path Choice" />
+        <img src={`${import.meta.env.BASE_URL}images/path.jpg`} alt="logo" className="logo" />
       </div>
 
       {/* Right Arrow & Text */}
