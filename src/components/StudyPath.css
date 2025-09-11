@@ -96,17 +96,29 @@
   }
 }
 
-/* ---------------- Extra Small Screens / Phones ---------------- */
 @media (max-width: 480px) {
   .study-container {
-    flex-direction: column; /* stack content vertically */
-    gap: 15px;
-    align-items: center;
+    flex-direction: row;       /* keep arrows left/right of image */
+    justify-content: center;   /* center everything horizontally */
+    align-items: center;       /* vertical alignment */
+    gap: 10px;                 /* reduce spacing on small screens */
+    flex-wrap: nowrap;         /* keep items in one row */
+    max-width: 95%;
+    overflow-x: auto;          /* allow scrolling if needed */
+    margin: 30px auto;         /* adjust margin for mobile */
   }
 
   .image-container img {
-    width: 90%; /* fit screen width */
-    max-width: 200px; 
-    margin-left: 0;
+    width: 55%;                /* smaller to fit screen */
+    max-width: 170px;
+    height: auto;
+  }
+
+  .arrow {
+    font-size: 28px;           /* smaller arrows */
+  }
+
+  .arrow-container {
+    font-size: 12px;
   }
 }
