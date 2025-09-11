@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, Link, HashLink  } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { HashLink } from 'react-router-hash-link';
 import { db } from '../firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import './Navbar.css'
