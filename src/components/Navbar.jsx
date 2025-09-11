@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link, HashLink  } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import './Navbar.css'
@@ -51,8 +51,8 @@ const Navbar = () => {
   return (
     <header className="header">
       <div className="logo-container">
-        <img src={`${import.meta.env.BASE_URL}images/logo-removebg-preview.png`} alt="logo" className="logo" />
-        <a href="/" className="logo-text">ევრიკა</a>
+        <img src={`${import.meta.env.BASE_URL}images/logo-removebg-preview.png`} alt="logo" className="logo-img" />
+        <Link to="/" className="logo-text">ევრიკა</Link>
       </div>
 
       {/* Hamburger button for mobile */}
@@ -81,8 +81,8 @@ const Navbar = () => {
         )}
 
         <nav className='navbar'>
-          <a href="#istoria">საკითხები</a>
-          <a href="/studypath">სწავლა</a>
+          <HashLink smooth to="/#istoria">საკითხები</HashLink>
+          <Link to="/studypath">სწავლა</Link>
           <a href="https://www.youtube.com/watch?v=65pky2hQ5wc">მწყურია</a>
         </nav>
       </div>
