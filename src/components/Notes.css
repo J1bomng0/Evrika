@@ -15,17 +15,21 @@
   color: #000;
 }
 
-.card_container_ {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-}
-
 .card_container_ p {
   font-size: 24px;
   font-weight: 500;
   color: #000;
+}
+
+/* Individual card */
+.card_container_ {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+  gap: 20px; /* space between cards */
+  justify-items: center; /* center cards horizontally */
+  align-items: center;   /* center cards vertically */
+  max-width: 900px; /* optional: limit container width */
+  margin: 0 auto; /* center grid on page */
 }
 
 /* Individual card */
@@ -40,7 +44,10 @@
   text-align: center;
   text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 180px;  /* fixed width for equal sizing */
+  height: 120px; /* fixed height */
 }
+
 
 /* Hover effect */
 .card_:hover {
