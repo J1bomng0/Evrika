@@ -61,6 +61,15 @@ body {
   text-decoration: underline;
 }
 
+.info-text {
+  white-space: pre-line; /* preserves line breaks */
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: left;
+  margin-bottom: 30px;
+}
+
+
 /* ---------------- Tablets / Medium Screens ---------------- */
 @media (max-width: 1024px) {
   .info-title {

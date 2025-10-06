@@ -12,7 +12,7 @@ const Notes = () => {
   useEffect(() => {
     const fetchNotes = async () => {
       try {
-        const q = query(collection(db, "notes"), where("category", "==", slug));
+        const q = query( collection(db, "notes"), where("category", "==", slug) );
         const querySnapshot = await getDocs(q);
         const notesData = querySnapshot.docs.map((doc) => ({
           id: doc.id,

@@ -8,11 +8,13 @@ import ProtectedRoute from './ProtectedRoute.jsx';
 import { Routes, Route } from "react-router-dom";
 import StudyPath from './components/StudyPath.jsx';
 import Navbar from './components/Navbar.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
 
 function App() {
   return (
     <>
     <Navbar />
+    <ScrollToTop />
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/studypath" element={<StudyPath />} />

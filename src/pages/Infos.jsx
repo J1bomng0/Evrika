@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
-import "./Infos.css";
 import Footer from "../components/Footer";  
+import "./Infos.css";
 
 const Infos = () => {
   const { noteId } = useParams(); 
@@ -40,6 +40,7 @@ const Infos = () => {
     <div>
       <div className="info-container">
         <h1 className="info-title">{note.title}</h1>
+        {/* Preserve line breaks with CSS */}
         <p className="info-text">{note.text || "ჯერ არ დამატებულა"}</p>
 
         {linksArray.length > 0 && (
