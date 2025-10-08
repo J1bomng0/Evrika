@@ -1,0 +1,7 @@
+[
+  {
+    "origin": ["https://evrika.com.ge", "http://localhost:5173"],
+    "method": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    "maxAgeSeconds": 3600
+  }
+]

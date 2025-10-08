@@ -103,6 +103,7 @@ const Dashboard = () => {
         createdAt: new Date(),
         order: notes.length,
       });
+      console.log("Added note ID:", docRef.id);
 
       setNotes((prev) => [
         ...prev,
