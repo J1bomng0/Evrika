@@ -9,6 +9,7 @@ import { Routes, Route } from "react-router-dom";
 import StudyPath from './components/StudyPath.jsx';
 import Navbar from './components/Navbar.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import RaarisIstoria from './pages/RaarisIstoria.jsx';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
       <Route path="/studypath" element={<StudyPath />} />
       <Route path="/category/:slug" element={<NotesList />} />
       <Route path="/category/:slug/:noteId" element={<Infos />} />
+      <Route path="/ra_aris_istoria" element={<RaarisIstoria />} />
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={ <ProtectedRoute><Dashboard /></ProtectedRoute>}/>
     </Routes>
