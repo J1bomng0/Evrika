@@ -1,9 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { db, storage  } from "../firebase";
-import { collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, updateDoc,} from "firebase/firestore";
+// FIX 1: Import the already initialized 'auth' instance directly
+import { db, storage, auth } from "../firebase"; 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, } from "@dnd-kit/core";
-import { arrayMove, SortableContext, verticalListSortingStrategy, } from "@dnd-kit/sortable";
+// FIX 2: Removed redundant import: import { getAuth } from "firebase/auth"; 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { SortableItem } from "../components/SortableItem";
 import "./Dashboard.css";
 
@@ -14,7 +36,11 @@ const categories = [
   { id: 4, name: "ქრონოლოგია", slug: "kronologia" },
   { id: 5, name: "ზავები,ედიქტები...", slug: "zavebi" },
   { id: 6, name: "ბრძოლები, აჯანყებები", slug: "brdzolebi_ajankebebi" },
-  { id: 7, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", slug: "movlenebi" },
+  {
+  id: 7,
+  name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები",
+  slug: "movlenebi",
+  },
   { id: 8, name: "ილუსტრაციები", slug: "ilustraciebi" },
 ];
 
@@ -33,6 +59,14 @@ const Dashboard = () => {
   const [previewImages, setPreviewImages] = useState([]);
 
   const sensors = useSensors(useSensor(PointerSensor));
+
+  // FIX 3: Moved auth check to a useEffect hook to run after component mounts
+  useEffect(() => {
+    // This will now work because 'auth' is imported and defined
+    const currentUser = auth.currentUser; 
+    console.log("Current Firebase User:", currentUser);
+    console.log("Is user signed in?", currentUser !== null);
+  }, []); // Run once on mount
 
   useEffect(() => {
     const fetchNotes = async () => {
@@ -63,32 +97,57 @@ const Dashboard = () => {
 
   // File upload handler
   const handleFileChange = async (e) => {
+    // Check authentication right before starting the upload
+    const currentUser = auth.currentUser; 
+    if (currentUser === null) {
+      alert("ოპერაცია შეუძლებელია: გთხოვთ შეხვიდეთ სისტემაში."); 
+      // Do not proceed with the upload if unauthenticated
+      setUploadingFiles(false);
+      return; 
+    }
+
     const files = Array.from(e.target.files);
-    setUploadingFiles(true);
+    setUploadingFiles(true); // <--- START UPLOADING MESSAGE
 
     const uploadedImages = [];
     const uploadedFiles = [];
+    let uploadSuccessful = true; // Flag to check if all uploads succeeded
 
     for (let file of files) {
-      const storageRef = ref(storage, `notes/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      try {
+        // Use a more specific path for notes content
+        const storageRef = ref(storage, `notes/${selectedCategory.slug}/${Date.now()}_${file.name}`);
+        
+        // **CRITICAL: Upload with error handling**
+        await uploadBytes(storageRef, file); 
+        const url = await getDownloadURL(storageRef);
 
-      if (file.type.startsWith("image/")) {
-        uploadedImages.push(url);
-      } else {
-        uploadedFiles.push(url);
+        if (file.type.startsWith("image/")) {
+          uploadedImages.push(url);
+        } else {
+          uploadedFiles.push(url);
+        }
+      } catch (error) {
+        console.error("File upload failed:", error);
+        alert(`ფაილის ატვირთვა ვერ მოხერხდა: ${file.name}. შეამოწმეთ კონსოლი.
+        (Error: ${error.code})`);
+        uploadSuccessful = false; // Mark failure
+        break; // Stop further uploads if one fails
       }
     }
+    
+    // Only update state if there were successful uploads
+    if(uploadSuccessful) {
+        setNewNote((prev) => ({
+          ...prev,
+          images: [...prev.images, ...uploadedImages],
+          files: [...prev.files, ...uploadedFiles],
+        }));
+        setPreviewImages((prev) => [...prev, ...uploadedImages]);
+    }
 
-    setNewNote((prev) => ({
-      ...prev,
-      images: [...prev.images, ...uploadedImages],
-      files: [...prev.files, ...uploadedFiles],
-    }));
 
-    setPreviewImages((prev) => [...prev, ...uploadedImages]);
-    setUploadingFiles(false);
+    setUploadingFiles(false); // <--- **FIX: Upload message stops here (success or failure)**
   };
 
   // Add new note
@@ -107,7 +166,12 @@ const Dashboard = () => {
 
       setNotes((prev) => [
         ...prev,
-        { id: docRef.id, ...newNote, category: selectedCategory.slug, order: prev.length },
+        {
+          id: docRef.id,
+          ...newNote,
+          category: selectedCategory.slug,
+          order: prev.length,
+        },
       ]);
       setNewNote({ title: "", text: "", sources: "", images: [], files: [] });
       setPreviewImages([]);
@@ -252,7 +316,7 @@ const Dashboard = () => {
                   accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx"
                   onChange={handleFileChange}
                 />
-                {uploadingFiles && <p>ფაილები იტვირთება...</p>}
+                {uploadingFiles && <p>ფაილები იტვირთება...</p>} 
 
                 {/* Preview Images */}
                 {previewImages.length > 0 && (
