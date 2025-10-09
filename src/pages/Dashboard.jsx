@@ -13,7 +13,6 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-// FIX 2: Removed redundant import: import { getAuth } from "firebase/auth"; 
 import {
   DndContext,
   closestCenter,
@@ -31,16 +30,12 @@ import "./Dashboard.css";
 
 const categories = [
   { id: 1, name: "კონსპექტები", slug: "konspektebi" },
-  { id: 2, name: "კითხვა-პასუხი", slug: "rukebi" },
-  { id: 3, name: "რუკები", slug: "pasuxi" },
+  { id: 2, name: "კითხვა-პასუხი", slug: "pasuxi" },
+  { id: 3, name: "რუკები", slug: "rukebi" },
   { id: 4, name: "ქრონოლოგია", slug: "kronologia" },
   { id: 5, name: "ზავები,ედიქტები...", slug: "zavebi" },
   { id: 6, name: "ბრძოლები, აჯანყებები", slug: "brdzolebi_ajankebebi" },
-  {
-  id: 7,
-  name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები",
-  slug: "movlenebi",
-  },
+  { id: 7, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", slug: "movlenebi"},
   { id: 8, name: "ილუსტრაციები", slug: "ilustraciebi" },
 ];
 

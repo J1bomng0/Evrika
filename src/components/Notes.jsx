@@ -4,25 +4,41 @@ import { db } from "../firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import "./Notes.css";
 
+// Define categories
+const categories = [
+  { id: 1, name: "კონსპექტები", slug: "konspektebi" },
+  { id: 2, name: "კითხვა-პასუხი", slug: "pasuxi" },
+  { id: 3, name: "რუკები", slug: "rukebi" },
+  { id: 4, name: "ქრონოლოგია", slug: "kronologia" },
+  { id: 5, name: "ზავები,ედიქტები...", slug: "zavebi" },
+  { id: 6, name: "ბრძოლები, აჯანყებები", slug: "brdzolebi_ajankebebi" },
+  { id: 7, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", slug: "movlenebi" },
+  { id: 8, name: "ილუსტრაციები", slug: "ilustraciebi" },
+];
+
 const Notes = () => {
   const { slug } = useParams();
   const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(true); // new state
+  const [loading, setLoading] = useState(true);
+
+  // Find category name
+  const category = categories.find((cat) => cat.slug === slug);
+  const categoryName = category ? category.name : "საკითხები";
 
   useEffect(() => {
     const fetchNotes = async () => {
       try {
-        const q = query( collection(db, "notes"), where("category", "==", slug) );
+        const q = query(collection(db, "notes"), where("category", "==", slug));
         const querySnapshot = await getDocs(q);
         const notesData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          name: doc.data().title, // use note title as name
+          name: doc.data().title,
         }));
         setNotes(notesData);
       } catch (err) {
         console.error("Error fetching notes: ", err);
       } finally {
-        setLoading(false); // stop loading once fetch is done
+        setLoading(false);
       }
     };
 
@@ -31,10 +47,9 @@ const Notes = () => {
 
   return (
     <div className="container_">
-      <h1>საკითხები</h1>
+      <h1>{categoryName}</h1> {/* Dynamic category name */}
       <div className="card_container_">
         {loading ? (
-          // 👇 Skeleton placeholder
           <div className="card_">
             <h2 className="card_title_ skeleton"></h2>
           </div>

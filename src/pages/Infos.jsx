@@ -90,20 +90,21 @@ const Infos = () => {
         )}
 
         {/* Files */}
-        {note.files && note.files.length > 0 && (
-          <div className="info-files">
-            <h3>ფაილები:</h3>
-            <ul>
-              {note.files.map((file, index) => (
-                <li key={index}>
-                  <a href={file} target="_blank" rel="noopener noreferrer">
-                    {file.split("/").pop()} {/* Shows file name */}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+{note.files && note.files.length > 0 && (
+  <div className="info-files">
+    <h3>ფაილები:</h3>
+    <ul>
+      {note.files.map((file, index) => (
+        <li key={index}>
+          <a href={file} target="_blank" rel="noopener noreferrer">
+            ↓📁 დააკლიკეთ გადმოსაწერად 
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
       </div>
       <Footer />
     </div>

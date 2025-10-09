@@ -72,10 +72,19 @@ body {
 .slider-image {
   width: 100%;
   max-height: 400px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 8px;
 }
 
+.info-files a {
+  color: #000;          /* black text */
+  text-decoration: none; /* remove underline */
+  font-weight: 500;      /* optional, makes text slightly bolder */
+}
+
+.info-files a:hover {
+  text-decoration: underline; /* optional: underline on hover */
+}
 
 
 /* ---------------- Tablets / Medium Screens ---------------- */
