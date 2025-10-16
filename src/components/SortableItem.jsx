@@ -3,8 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 export function SortableItem({ note, onDelete, onEdit }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: note.id });
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: note.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -20,8 +19,22 @@ export function SortableItem({ note, onDelete, onEdit }) {
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <h3>{note.title}</h3>
       <div style={{ display: "flex", gap: "10px" }}>
-        <button onClick={() => onEdit(note)}>რედაქტირება</button>
-        <button onClick={() => onDelete(note.id)}>წაშლა</button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent drag-and-drop interference
+            onEdit(note);
+          }}
+        >
+          რედაქტირება
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent drag-and-drop interference
+            onDelete(note.id);
+          }}
+        >
+          წაშლა
+        </button>
       </div>
     </div>
   );

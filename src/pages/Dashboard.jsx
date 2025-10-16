@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-// FIX 1: Import the already initialized 'auth' instance directly
-import { db, storage, auth } from "../firebase"; 
+import { db, storage, auth } from "../firebase";
 import {
   collection,
   addDoc,
@@ -24,9 +23,11 @@ import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
+  useSortable,
 } from "@dnd-kit/sortable";
-import { SortableItem } from "../components/SortableItem";
+import { CSS } from "@dnd-kit/utilities";
 import "./Dashboard.css";
+import { SortableItem } from "../components/SortableItem.jsx";
 
 const categories = [
   { id: 1, name: "კონსპექტები", slug: "konspektebi" },
@@ -38,6 +39,34 @@ const categories = [
   { id: 7, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", slug: "movlenebi"},
   { id: 8, name: "ილუსტრაციები", slug: "ilustraciebi" },
 ];
+
+// New SortableImage component for draggable images
+const SortableImage = ({ image, index }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: image,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    maxWidth: "150px",
+    maxHeight: "150px",
+    objectFit: "cover",
+    margin: "5px",
+    cursor: "grab",
+  };
+
+  return (
+    <img
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      src={image}
+      alt={`preview-${index}`}
+    />
+  );
+};
 
 const Dashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -53,15 +82,20 @@ const Dashboard = () => {
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
 
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+        delay: 100,
+      },
+    })
+  );
 
-  // FIX 3: Moved auth check to a useEffect hook to run after component mounts
   useEffect(() => {
-    // This will now work because 'auth' is imported and defined
-    const currentUser = auth.currentUser; 
+    const currentUser = auth.currentUser;
     console.log("Current Firebase User:", currentUser);
     console.log("Is user signed in?", currentUser !== null);
-  }, []); // Run once on mount
+  }, []);
 
   useEffect(() => {
     const fetchNotes = async () => {
@@ -90,31 +124,25 @@ const Dashboard = () => {
     fetchNotes();
   }, [selectedCategory]);
 
-  // File upload handler
   const handleFileChange = async (e) => {
-    // Check authentication right before starting the upload
-    const currentUser = auth.currentUser; 
+    const currentUser = auth.currentUser;
     if (currentUser === null) {
-      alert("ოპერაცია შეუძლებელია: გთხოვთ შეხვიდეთ სისტემაში."); 
-      // Do not proceed with the upload if unauthenticated
+      alert("ოპერაცია შეუძლებელია: გთხოვთ შეხვიდეთ სისტემაში.");
       setUploadingFiles(false);
-      return; 
+      return;
     }
 
     const files = Array.from(e.target.files);
-    setUploadingFiles(true); // <--- START UPLOADING MESSAGE
+    setUploadingFiles(true);
 
     const uploadedImages = [];
     const uploadedFiles = [];
-    let uploadSuccessful = true; // Flag to check if all uploads succeeded
+    let uploadSuccessful = true;
 
     for (let file of files) {
       try {
-        // Use a more specific path for notes content
         const storageRef = ref(storage, `notes/${selectedCategory.slug}/${Date.now()}_${file.name}`);
-        
-        // **CRITICAL: Upload with error handling**
-        await uploadBytes(storageRef, file); 
+        await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
 
         if (file.type.startsWith("image/")) {
@@ -124,28 +152,24 @@ const Dashboard = () => {
         }
       } catch (error) {
         console.error("File upload failed:", error);
-        alert(`ფაილის ატვირთვა ვერ მოხერხდა: ${file.name}. შეამოწმეთ კონსოლი.
-        (Error: ${error.code})`);
-        uploadSuccessful = false; // Mark failure
-        break; // Stop further uploads if one fails
+        alert(`ფაილის ატვირთვა ვერ მოხერხდა: ${file.name}. შეამოწმეთ კონსოლი. (Error: ${error.code})`);
+        uploadSuccessful = false;
+        break;
       }
     }
-    
-    // Only update state if there were successful uploads
-    if(uploadSuccessful) {
-        setNewNote((prev) => ({
-          ...prev,
-          images: [...prev.images, ...uploadedImages],
-          files: [...prev.files, ...uploadedFiles],
-        }));
-        setPreviewImages((prev) => [...prev, ...uploadedImages]);
+
+    if (uploadSuccessful) {
+      setNewNote((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedImages],
+        files: [...prev.files, ...uploadedFiles],
+      }));
+      setPreviewImages((prev) => [...prev, ...uploadedImages]);
     }
 
-
-    setUploadingFiles(false); // <--- **FIX: Upload message stops here (success or failure)**
+    setUploadingFiles(false);
   };
 
-  // Add new note
   const handleAddNote = async (e) => {
     e.preventDefault();
     if (!selectedCategory) return alert("აირჩიე კატეგორია!");
@@ -175,7 +199,6 @@ const Dashboard = () => {
     }
   };
 
-  // Delete note
   const handleDelete = async (id) => {
     if (!window.confirm("წაშლა გინდა?")) return;
     try {
@@ -186,7 +209,6 @@ const Dashboard = () => {
     }
   };
 
-  // Edit note
   const handleEdit = (note) => {
     setEditingNote(note);
     setNewNote({
@@ -243,6 +265,22 @@ const Dashboard = () => {
     }
   };
 
+  // New function to handle image drag-and-drop
+  const handleImageDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = previewImages.findIndex((img) => img === active.id);
+    const newIndex = previewImages.findIndex((img) => img === over.id);
+
+    const newPreviewImages = arrayMove(previewImages, oldIndex, newIndex);
+    setPreviewImages(newPreviewImages);
+    setNewNote((prev) => ({
+      ...prev,
+      images: arrayMove(prev.images, oldIndex, newIndex),
+    }));
+  };
+
   return (
     <div className="dashboard-container">
       {!selectedCategory ? (
@@ -273,7 +311,6 @@ const Dashboard = () => {
             </div>
           ) : (
             <>
-              {/* Add / Edit Note */}
               <form
                 onSubmit={editingNote ? handleSaveEdit : handleAddNote}
                 className="dashboard-form"
@@ -304,22 +341,32 @@ const Dashboard = () => {
                   }
                 />
 
-                {/* File Upload */}
                 <input
                   type="file"
                   multiple
                   accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx"
                   onChange={handleFileChange}
                 />
-                {uploadingFiles && <p>ფაილები იტვირთება...</p>} 
+                {uploadingFiles && <p>ფაილები იტვირთება...</p>}
 
-                {/* Preview Images */}
+                {/* Updated Image Preview with Drag-and-Drop */}
                 {previewImages.length > 0 && (
-                  <div className="preview-images">
-                    {previewImages.map((img, idx) => (
-                      <img key={idx} src={img} alt={`preview-${idx}`} />
-                    ))}
-                  </div>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleImageDragEnd}
+                  >
+                    <SortableContext
+                      items={previewImages}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="preview-images">
+                        {previewImages.map((img, idx) => (
+                          <SortableImage key={img} image={img} index={idx} />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 )}
 
                 <button type="submit">
@@ -327,7 +374,6 @@ const Dashboard = () => {
                 </button>
               </form>
 
-              {/* Notes List with drag-and-drop */}
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}

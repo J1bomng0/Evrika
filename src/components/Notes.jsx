@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { db } from "../firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore"; // Add orderBy import
 import "./Notes.css";
 
 // Define categories
@@ -28,7 +28,12 @@ const Notes = () => {
   useEffect(() => {
     const fetchNotes = async () => {
       try {
-        const q = query(collection(db, "notes"), where("category", "==", slug));
+        // Updated query to include orderBy
+        const q = query(
+          collection(db, "notes"),
+          where("category", "==", slug),
+          orderBy("order", "asc") // Ensure notes are sorted by the 'order' field
+        );
         const querySnapshot = await getDocs(q);
         const notesData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
