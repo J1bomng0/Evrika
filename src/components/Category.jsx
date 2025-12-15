@@ -5,13 +5,15 @@ import './Category.css';
 const categories = [
   { id: 1, name: "კონსპექტები", image: "images/konspekt.jpg", slug: "konspektebi" },
   { id: 2, name: "კითხვა-პასუხი", image: "images/kitxva_pasux.jpeg", slug: "pasuxi" },
-  { id: 3, name: "რუკები", image: "images/rukebi.jpeg", slug: "rukebi" },
-  { id: 4, name: "ქრონოლოგია", image: "images/kronolog.jpeg", slug: "kronologia" },
-  { id: 5, name: "ზავები,ედიქტები...", image: "images/zavebi.jpeg", slug: "zavebi" },
-  { id: 6, name: "ბრძოლები, აჯანყებები", image: "images/brdzolebi.jpeg", slug: "brdzolebi_ajankebebi" },
-  { id: 7, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", image: "images/movlenebi.jpeg", slug: "movlenebi" },
-  { id: 8, name: "ილუსტრაციები", image: "images/ilustraciebi.jpeg", slug: "ilustraciebi" },
-  { id: 9, name: "რა არის ისტორია? ", image: "images/raarisist.jpeg", slug: "istoria" },
+  { id: 3, name: "ტესტები ", image: "images/testebi.jpg", slug: "testebi" },
+  { id: 4, name: "რუკები", image: "images/rukebi.jpeg", slug: "rukebi" },
+  { id: 5, name: "ქრონოლოგია", image: "images/kronolog.jpeg", slug: "kronologia" },
+  { id: 6, name: "ზავები,ედიქტები...", image: "images/zavebi.jpeg", slug: "zavebi" },
+  { id: 7, name: "ბრძოლები, აჯანყებები", image: "images/brdzolebi.jpeg", slug: "brdzolebi_ajankebebi" },
+  { id: 8, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", image: "images/movlenebi.jpeg", slug: "movlenebi" },
+  { id: 9, name: "ილუსტრაციები", image: "images/ilustraciebi.jpeg", slug: "ilustraciebi" },
+  { id: 10, name: "რა არის ისტორია? ", image: "images/raarisist.jpeg", slug: "istoria" },
+  { id: 11, name: "წიგნი", image: "images/book.jpg", slug: "book" },
 ];
 
 const Category = () => {

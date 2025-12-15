@@ -8,12 +8,13 @@ import "./Notes.css";
 const categories = [
   { id: 1, name: "კონსპექტები", slug: "konspektebi" },
   { id: 2, name: "კითხვა-პასუხი", slug: "pasuxi" },
-  { id: 3, name: "რუკები", slug: "rukebi" },
-  { id: 4, name: "ქრონოლოგია", slug: "kronologia" },
-  { id: 5, name: "ზავები,ედიქტები...", slug: "zavebi" },
-  { id: 6, name: "ბრძოლები, აჯანყებები", slug: "brdzolebi_ajankebebi" },
-  { id: 7, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", slug: "movlenebi" },
-  { id: 8, name: "ილუსტრაციები", slug: "ilustraciebi" },
+  { id: 3, name: "ტესტები", slug: "testebi" },
+  { id: 4, name: "რუკები", slug: "rukebi" },
+  { id: 5, name: "ქრონოლოგია", slug: "kronologia" },
+  { id: 6, name: "ზავები,ედიქტები...", slug: "zavebi" },
+  { id: 7, name: "ბრძოლები, აჯანყებები", slug: "brdzolebi_ajankebebi" },
+  { id: 8, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", slug: "movlenebi"},
+  { id: 9, name: "ილუსტრაციები", slug: "ilustraciebi" },
 ];
 
 const Notes = () => {
@@ -35,10 +36,17 @@ const Notes = () => {
           orderBy("order", "asc") // Ensure notes are sorted by the 'order' field
         );
         const querySnapshot = await getDocs(q);
-        const notesData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          name: doc.data().title,
-        }));
+        const notesData = querySnapshot.docs
+  .map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }))
+  .filter((note) => !note.parentId) // ⬅️ ONLY containers
+  .map((note) => ({
+    id: note.id,
+    name: note.title,
+  }));
+
         setNotes(notesData);
       } catch (err) {
         console.error("Error fetching notes: ", err);

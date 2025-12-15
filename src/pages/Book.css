@@ -1,0 +1,54 @@
+/* PAGE BACKGROUND */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* TITLE */
+.info-title {
+  text-align: center;
+  font-size: 3rem;
+  font-weight: 700;
+  margin-top: 40px;
+  margin-bottom: 30px;
+  color: #000;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.banner {
+  position: relative;
+  width: 100%;
+  min-height: 100vh; 
+  background-color: #54411E;
+  display: flex;
+  align-items: center;
+  padding-left: 5%; 
+  overflow: hidden;
+}
+
+/* BANNER IMAGE */
+.banner img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.36; 
+  z-index: 1;
+}
+/* TEXT SECTION */
+.info-container {
+  width: 85%;
+  max-width: 1100px;
+  margin: 0 auto 80px auto;
+}
+
+/* PARAGRAPH TEXT */
+.info-text {
+  font-size: 1.05rem;
+  line-height: 1.9;
+  color: #000;
+  font-family: "Georgia", serif;
+  text-align: justify;
+}

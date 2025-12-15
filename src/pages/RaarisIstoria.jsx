@@ -1,5 +1,5 @@
 import React from "react";
-import "./RaarisIstoria.css"; // make sure this imports your CSS
+import "./RaarisIstoria.css"; 
 
 const RaarisIstoria = () => {
   return (
