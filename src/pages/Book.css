@@ -1,27 +1,38 @@
-/* PAGE BACKGROUND */
+/* RESET */
 body {
   margin: 0;
   padding: 0;
 }
 
-/* TITLE */
-.info-title {
-  text-align: center;
-  font-size: 3rem;
-  font-weight: 700;
-  margin-top: 40px;
-  margin-bottom: 30px;
-  color: #000;
-  font-family: "Segoe UI", sans-serif;
+/* PAGE */
+.book-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* BANNER CONTAINER */
+/* MAIN HORIZONTAL LAYOUT (targets your existing structure) */
+.book-page > .banner1,
+.book-page > .downloads {
+  max-width: 3000px;
+}
+
+/* WRAP BOTH SECTIONS INTO A CENTERED ROW */
+.book-page {
+  flex-direction: row;
+  gap: 80px;
+  padding: 60px;
+  padding-top: 10px;
+  
+}
+
+
+/* IMAGE */
 .banner1 {
-  width: 85%;
-  max-width: 1100px;
-  margin: 0 auto 50px auto;
-  overflow: hidden;
-  background: transparent;
+  flex: 1.2;
+  max-width: 1000px;
+  margin-left: 200px;
 }
 
 .banner1 img {
@@ -30,18 +41,43 @@ body {
   display: block;
 }
 
-/* TEXT SECTION */
-.info-container {
-  width: 85%;
-  max-width: 1100px;
-  margin: 0 auto 80px auto;
+/* DOWNLOAD SECTION */
+.downloads {
+  flex: 1;
+  text-align: left;
 }
 
-/* PARAGRAPH TEXT */
-.info-text {
-  font-size: 1.05rem;
-  line-height: 1.9;
+/* TITLE */
+.downloads-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 25px;
   color: #000;
-  font-family: "Georgia", serif;
-  text-align: justify;
+}
+
+/* FILE ICONS */
+.files {
+  display: flex;
+  gap: 50px;
+}
+
+.file-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #000;
+}
+
+.file-item img {
+  width: 80px;
+  margin-bottom: 10px;
+}
+
+.file-item span {
+  font-size: 0.95rem;
+}
+
+.file-item:hover {
+  transform: translateY(-4px);
 }

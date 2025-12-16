@@ -1,6 +1,5 @@
 import React from "react";
 import { Routes, Route, useParams } from "react-router-dom";
-
 import Home from "./pages/Home.jsx";
 import NotesList from "./pages/NotesList.jsx";
 import Infos from "./pages/Infos.jsx";
@@ -13,6 +12,7 @@ import ScrollToTop from "./components/ScrollToTop.jsx";
 import RaarisIstoria from "./pages/RaarisIstoria.jsx";
 import Book from "./pages/book.jsx";
 import Timeline from "./components/Timeline.jsx";
+import Kitxva from "./pages/kitxva.jsx";
 
 /* 🔹 Category-aware router */
 const CategoryRouter = () => {
@@ -20,6 +20,9 @@ const CategoryRouter = () => {
 
   if (slug === "kronologia") {
     return <Timeline />;
+  }
+  if (slug === "pasuxi") {
+    return <Kitxva />;
   }
 
   return <Infos />;
