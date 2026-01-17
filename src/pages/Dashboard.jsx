@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { db } from "../firebase";
 import {
   collection,
@@ -9,8 +9,25 @@ import {
   orderBy,
   deleteDoc,
   doc,
+  writeBatch, // ✅ added
 } from "firebase/firestore";
 import "./Dashboard.css";
+
+// ✅ added (dnd-kit)
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const categories = [
   { id: 1, name: "კონსპექტები", slug: "konspektebi" },
@@ -23,6 +40,45 @@ const categories = [
   { id: 8, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", slug: "movlenebi" },
   { id: 9, name: "ილუსტრაციები", slug: "ilustraciebi" },
 ];
+
+// ✅ small inline sortable item using your existing note-item styling
+function SortableNoteItem({ note, onDelete }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: note.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    cursor: "grab",
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="note-item"
+      {...attributes}
+      {...listeners}
+    >
+      <h3>{note.title}</h3>
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // ✅ so clicking delete doesn't start dragging
+          onDelete(note.id);
+        }}
+      >
+        წაშლა
+      </button>
+    </div>
+  );
+}
 
 const Dashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -37,6 +93,9 @@ const Dashboard = () => {
     text: "",
   });
 
+  // ✅ dnd sensors
+  const sensors = useSensors(useSensor(PointerSensor));
+
   /* ---------------- FETCH NOTES ---------------- */
 
   useEffect(() => {
@@ -49,7 +108,15 @@ const Dashboard = () => {
         orderBy("order", "asc")
       );
       const snap = await getDocs(q);
-      setNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+      // keep your structure, but ensure order is numeric (helps stability)
+      setNotes(
+        snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+          order: Number(d.data()?.order ?? 0),
+        }))
+      );
     };
 
     fetchNotes();
@@ -107,7 +174,7 @@ const Dashboard = () => {
         selectedCategory.slug === "kronologia" && isTimelineEvent
           ? selectedTimelineId
           : null,
-      order: siblings.length,
+      order: siblings.length, // keeping your existing behavior
       createdAt: new Date(),
     });
 
@@ -126,8 +193,57 @@ const Dashboard = () => {
 
   const visibleNotes =
     selectedCategory?.slug === "kronologia"
-      ? notes.filter((n) => !n.parentId)
+      ? notes.filter((n) => !n.parentId) // containers only
       : notes;
+
+  // ✅ ids for SortableContext
+  const visibleIds = useMemo(
+    () => visibleNotes.map((n) => n.id),
+    [visibleNotes]
+  );
+
+  /* ---------------- DRAG END (SAVE ORDER) ---------------- */
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = visibleNotes.findIndex((n) => n.id === active.id);
+    const newIndex = visibleNotes.findIndex((n) => n.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    // Reorder ONLY what is visible
+    const movedVisible = arrayMove(visibleNotes, oldIndex, newIndex);
+
+    // Normalize orders to 1..N (fixes duplicates)
+    const normalizedVisible = movedVisible.map((n, i) => ({
+      ...n,
+      order: i + 1,
+    }));
+
+    // Update local notes state without breaking the rest:
+    // - if kronologia: reorder containers only, keep timeline events as-is
+    // - else: reorder whole list (same as visible)
+    setNotes((prev) => {
+      if (selectedCategory?.slug === "kronologia") {
+        const children = prev.filter((n) => n.parentId); // events
+        return [...normalizedVisible, ...children];
+      }
+      return normalizedVisible;
+    });
+
+    // Persist only visible items (containers for kronologia, all for others)
+    try {
+      const batch = writeBatch(db);
+      normalizedVisible.forEach((n) => {
+        batch.update(doc(db, "notes", n.id), { order: n.order });
+      });
+      await batch.commit();
+    } catch (err) {
+      console.error("Failed to save order:", err);
+      alert("ვერ შევინახე დალაგება (order). სცადე თავიდან.");
+    }
+  };
 
   /* ---------------- RENDER ---------------- */
 
@@ -212,14 +328,27 @@ const Dashboard = () => {
             <button type="submit">დამატება</button>
           </form>
 
-          <div className="notes-list">
-            {visibleNotes.map((note) => (
-              <div key={note.id} className="note-item">
-                <h3>{note.title}</h3>
-                <button onClick={() => handleDelete(note.id)}>წაშლა</button>
+          {/* ✅ Wrapped your list with DnD without changing your structure */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={visibleIds}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="notes-list">
+                {visibleNotes.map((note) => (
+                  <SortableNoteItem
+                    key={note.id}
+                    note={note}
+                    onDelete={handleDelete}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         </>
       )}
     </div>

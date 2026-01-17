@@ -2,39 +2,62 @@ import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-export function SortableItem({ note, onDelete, onEdit }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: note.id });
+export default function SortableItem({ id, title, order }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    border: "1px solid #ccc",
-    padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "8px",
-    background: "#fafafa",
+    opacity: isDragging ? 0.6 : 1,
+    background: "white",
+    borderRadius: 12,
+    padding: 16,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    boxShadow: "0 1px 6px rgba(0,0,0,0.08)",
+    border: "1px solid rgba(0,0,0,0.06)",
+  };
+
+  const left = {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    minWidth: 0,
+  };
+
+  const handle = {
+    cursor: "grab",
+    userSelect: "none",
+    padding: "6px 10px",
+    borderRadius: 10,
+    border: "1px solid rgba(0,0,0,0.12)",
+    background: "rgba(0,0,0,0.03)",
+    fontWeight: 600,
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <h3>{note.title}</h3>
-      <div style={{ display: "flex", gap: "10px" }}>
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent drag-and-drop interference
-            onEdit(note);
-          }}
-        >
-          რედაქტირება
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent drag-and-drop interference
-            onDelete(note.id);
-          }}
-        >
-          წაშლა
-        </button>
+    <div ref={setNodeRef} style={style}>
+      <div style={left}>
+        <span style={{ width: 36, fontVariantNumeric: "tabular-nums", opacity: 0.7 }}>
+          {order}.
+        </span>
+
+        <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {title}
+        </div>
+      </div>
+
+      {/* Drag handle */}
+      <div style={handle} {...attributes} {...listeners}>
+        ↕
       </div>
     </div>
   );
