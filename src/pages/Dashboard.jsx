@@ -9,11 +9,11 @@ import {
   orderBy,
   deleteDoc,
   doc,
-  writeBatch, // ✅ added
+  writeBatch, 
+  updateDoc,
 } from "firebase/firestore";
 import "./Dashboard.css";
 
-// ✅ added (dnd-kit)
 import {
   DndContext,
   closestCenter,
@@ -42,7 +42,7 @@ const categories = [
 ];
 
 // ✅ small inline sortable item using your existing note-item styling
-function SortableNoteItem({ note, onDelete }) {
+function SortableNoteItem({ note, onDelete, onEdit }) {
   const {
     attributes,
     listeners,
@@ -68,6 +68,16 @@ function SortableNoteItem({ note, onDelete }) {
       {...listeners}
     >
       <h3>{note.title}</h3>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(note);
+        }}
+      >
+        რედაქტირება
+      </button>
+
       <button
         onClick={(e) => {
           e.stopPropagation(); // ✅ so clicking delete doesn't start dragging
@@ -92,6 +102,8 @@ const Dashboard = () => {
     title: "",
     text: "",
   });
+
+  const [editingId, setEditingId] = useState(null);
 
   // ✅ dnd sensors
   const sensors = useSensors(useSensor(PointerSensor));
@@ -146,42 +158,80 @@ const Dashboard = () => {
   /* ---------------- ADD NOTE ---------------- */
 
   const handleAddNote = async (e) => {
-    e.preventDefault();
-    if (!selectedCategory) return;
+  e.preventDefault();
+  if (!selectedCategory) return;
 
-    if (
-      selectedCategory.slug === "kronologia" &&
-      isTimelineEvent &&
-      !selectedTimelineId
-    ) {
-      alert("აირჩიე ქრონოლოგია");
-      return;
-    }
+  if (
+    selectedCategory.slug === "kronologia" &&
+    isTimelineEvent &&
+    !selectedTimelineId
+  ) {
+    alert("აირჩიე ქრონოლოგია");
+    return;
+  }
 
-    const siblings = notes.filter(
-      (n) =>
-        n.parentId ===
-        (selectedCategory.slug === "kronologia" && isTimelineEvent
-          ? selectedTimelineId
-          : null)
+  const parentId =
+    selectedCategory.slug === "kronologia" && isTimelineEvent
+      ? selectedTimelineId
+      : null;
+
+  if (editingId) {
+    await updateDoc(doc(db, "notes", editingId), {
+      title: newNote.title,
+      text: newNote.text,
+      category: selectedCategory.slug,
+      parentId,
+    });
+
+    setNotes((prev) =>
+      prev.map((n) =>
+        n.id === editingId
+          ? {
+              ...n,
+              title: newNote.title,
+              text: newNote.text,
+              category: selectedCategory.slug,
+              parentId,
+            }
+          : n
+      )
     );
+  } else {
+    const siblings = notes.filter((n) => n.parentId === parentId);
 
     await addDoc(collection(db, "notes"), {
       title: newNote.title,
       text: newNote.text,
       category: selectedCategory.slug,
-      parentId:
-        selectedCategory.slug === "kronologia" && isTimelineEvent
-          ? selectedTimelineId
-          : null,
-      order: siblings.length, // keeping your existing behavior
+      parentId,
+      order: siblings.length,
       createdAt: new Date(),
     });
+  }
 
-    setNewNote({ title: "", text: "" });
-    setIsTimelineEvent(false);
-    setSelectedTimelineId("");
-  };
+  setNewNote({ title: "", text: "" });
+  setEditingId(null);
+  setIsTimelineEvent(false);
+  setSelectedTimelineId("");
+};
+
+  const handleEdit = (note) => {
+  setEditingId(note.id);
+  setNewNote({
+    title: note.title || "",
+    text: note.text || "",
+  });
+
+  if (selectedCategory?.slug === "kronologia") {
+    if (note.parentId) {
+      setIsTimelineEvent(true);
+      setSelectedTimelineId(note.parentId);
+    } else {
+      setIsTimelineEvent(false);
+      setSelectedTimelineId("");
+    }
+  }
+};
 
   /* ---------------- DELETE ---------------- */
 
@@ -344,6 +394,7 @@ const Dashboard = () => {
                     key={note.id}
                     note={note}
                     onDelete={handleDelete}
+                    onEdit={handleEdit}
                   />
                 ))}
               </div>
