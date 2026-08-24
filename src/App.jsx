@@ -10,7 +10,7 @@ import StudyPath from "./components/StudyPath.jsx";
 import Navbar from "./components/Navbar.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import RaarisIstoria from "./pages/RaarisIstoria.jsx";
-import Book from "./pages/book.jsx";
+import Ira from "./pages/Ira.jsx";
 import Timeline from "./components/Timeline.jsx";
 import Kitxva from "./pages/kitxva.jsx";
 
@@ -47,7 +47,7 @@ function App() {
 
         {/* Static pages */}
         <Route path="/ra_aris_istoria" element={<RaarisIstoria />} />
-        <Route path="/book" element={<Book />} />
+        <Route path="/Ira" element={<Ira />} />
 
         {/* Auth */}
         <Route path="/login" element={<Login />} />

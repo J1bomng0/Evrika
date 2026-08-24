@@ -1,7 +1,7 @@
 /* ---------------- Default (Desktop) ---------------- */
 .container {
   max-width: 1200px;
-  margin: 70px 105px;
+  margin: 70px auto; /* Changed 105px to auto to center */
   padding: 2rem;
 }
 
@@ -69,7 +69,7 @@
 /* ---------------- Tablets / Medium Screens ---------------- */
 @media (max-width: 1024px) {
   .container {
-    margin: 50px 40px;
+    margin: 50px auto; /* Changed 40px to auto */
     padding: 1.5rem;
   }
 
@@ -90,7 +90,7 @@
 /* ---------------- Small Screens / Mobile ---------------- */
 @media (max-width: 768px) {
   .container {
-    margin: 40px 20px;
+    margin: 40px auto; /* Changed 20px to auto */
     padding: 1rem;
   }
 
@@ -111,7 +111,7 @@
 /* ---------------- Extra Small Screens / Phones ---------------- */
 @media (max-width: 480px) {
   .container {
-    margin: 20px 10px;
+    margin: 20px auto; /* Changed 10px to auto */
     padding: 0;
   }
 

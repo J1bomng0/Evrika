@@ -6,7 +6,10 @@ function Hero() {
   return (
     <div className="banner" >
         <img src={heroImage} alt="Cleopatra"/>
-        <h1 >სწავლა გინდა? <br /> ისწავლე! </h1>
+        <div className="hero-content">
+          <h1>ევრიკა - მე ის ვიპოვე! </h1>
+          <p>ისტორიის სასწავლო მასალები და კონსპექტები აბიტურიენტებისთვის</p>
+        </div>
     </div>
   );
 }

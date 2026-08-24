@@ -1,6 +1,9 @@
-@font-face {
-    font-family: 'GeoFont';
-    src: url('./assets/archyedt-bold.otf') format('truetype');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: Inter, sans-serif;
+  letter-spacing: -0.01em;
+  font-feature-settings: "ss01" on, "cv01" on;
 }
 
 * {
