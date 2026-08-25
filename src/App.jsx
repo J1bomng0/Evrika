@@ -13,6 +13,7 @@ import RaarisIstoria from "./pages/RaarisIstoria.jsx";
 import Ira from "./pages/Ira.jsx";
 import Timeline from "./components/Timeline.jsx";
 import Kitxva from "./pages/kitxva.jsx";
+import Testebi from "./pages/Testebi.jsx";
 
 /* 🔹 Category-aware router */
 const CategoryRouter = () => {
@@ -23,6 +24,9 @@ const CategoryRouter = () => {
   }
   if (slug === "pasuxi") {
     return <Kitxva />;
+  }
+  if (slug === "testebi") {
+    return <Testebi />; 
   }
 
   return <Infos />;

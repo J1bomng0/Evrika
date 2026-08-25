@@ -6,10 +6,9 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   deleteDoc,
   doc,
-  writeBatch, 
+  writeBatch,
   updateDoc,
 } from "firebase/firestore";
 import "./Dashboard.css";
@@ -35,14 +34,13 @@ const categories = [
   { id: 3, name: "ტესტები", slug: "testebi" },
   { id: 4, name: "რუკები", slug: "rukebi" },
   { id: 5, name: "ქრონოლოგია", slug: "kronologia" },
-  { id: 6, name: "ზავები,ედიქტები...", slug: "zavebi" },
+  { id: 6, name: "ზავები, ედიქტები...", slug: "zavebi" },
   { id: 7, name: "ბრძოლები, აჯანყებები", slug: "brdzolebi_ajankebebi" },
   { id: 8, name: "მსოფლიო ისტორიის მნიშვნელოვანი მოვლენები", slug: "movlenebi" },
   { id: 9, name: "ილუსტრაციები", slug: "ilustraciebi" },
 ];
 
-// ✅ small inline sortable item using your existing note-item styling
-function SortableNoteItem({ note, onDelete, onEdit }) {
+function SortableNoteItem({ note, isQuizQuestion, onDelete, onEdit }) {
   const {
     attributes,
     listeners,
@@ -55,7 +53,7 @@ function SortableNoteItem({ note, onDelete, onEdit }) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.6 : 1,
+    opacity: isDragging ? 0.5 : 1,
     cursor: "grab",
   };
 
@@ -67,192 +65,273 @@ function SortableNoteItem({ note, onDelete, onEdit }) {
       {...attributes}
       {...listeners}
     >
-      <h3>{note.title}</h3>
+      <div className="note-content-preview">
+        <h3>{note.question || note.title}</h3>
+        {note.options && (
+          <span className="quiz-preview-tag">
+            {note.options.length} სავარაუდო პასუხი
+          </span>
+        )}
+      </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onEdit(note);
-        }}
-      >
-        რედაქტირება
-      </button>
+      <div className="note-actions">
+        <button
+          type="button"
+          className="btn-edit"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => onEdit(note)}
+        >
+          რედაქტირება
+        </button>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation(); // ✅ so clicking delete doesn't start dragging
-          onDelete(note.id);
-        }}
-      >
-        წაშლა
-      </button>
+        <button
+          type="button"
+          className="btn-delete"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => onDelete(note.id)}
+        >
+          წაშლა
+        </button>
+      </div>
     </div>
   );
 }
 
-const Dashboard = () => {
+export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(false);
 
+  // Standard Note State / Test Container State
+  const [newNote, setNewNote] = useState({ title: "", text: "" });
+
+  // Quiz-Specific Question State
+  const [isQuizQuestion, setIsQuizQuestion] = useState(false);
+  const [selectedQuizParentId, setSelectedQuizParentId] = useState("");
+  const [quizForm, setQuizForm] = useState({
+    question: "",
+    optA: "",
+    optB: "",
+    optC: "",
+    optD: "",
+    correctIndex: 0,
+  });
+
+  // Timeline State
   const [timelineContainers, setTimelineContainers] = useState([]);
   const [isTimelineEvent, setIsTimelineEvent] = useState(false);
   const [selectedTimelineId, setSelectedTimelineId] = useState("");
 
-  const [newNote, setNewNote] = useState({
-    title: "",
-    text: "",
-  });
-
   const [editingId, setEditingId] = useState(null);
 
-  // ✅ dnd sensors
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
-  /* ---------------- FETCH NOTES ---------------- */
+  const isTestebi = selectedCategory?.slug === "testebi";
 
-  useEffect(() => {
+  /* ---------------- FETCH DATA ---------------- */
+
+  const fetchNotes = async () => {
     if (!selectedCategory) return;
+    setLoading(true);
 
-    const fetchNotes = async () => {
+    try {
       const q = query(
         collection(db, "notes"),
-        where("category", "==", selectedCategory.slug),
-        orderBy("order", "asc")
+        where("category", "==", selectedCategory.slug)
       );
       const snap = await getDocs(q);
 
-      // keep your structure, but ensure order is numeric (helps stability)
-      setNotes(
-        snap.docs.map((d) => ({
+      const items = snap.docs
+        .map((d) => ({
           id: d.id,
           ...d.data(),
           order: Number(d.data()?.order ?? 0),
         }))
-      );
-    };
+        .sort((a, b) => a.order - b.order);
 
-    fetchNotes();
-  }, [selectedCategory]);
+      setNotes(items);
 
-  /* -------- FETCH TIMELINE CONTAINERS -------- */
-
-  useEffect(() => {
-    if (selectedCategory?.slug !== "kronologia") return;
-
-    const fetchContainers = async () => {
-      const q = query(
-        collection(db, "notes"),
-        where("category", "==", "kronologia")
-      );
-      const snap = await getDocs(q);
-      setTimelineContainers(
-        snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((n) => !n.parentId)
-      );
-    };
-
-    fetchContainers();
-  }, [selectedCategory]);
-
-  /* ---------------- ADD NOTE ---------------- */
-
-  const handleAddNote = async (e) => {
-  e.preventDefault();
-  if (!selectedCategory) return;
-
-  if (
-    selectedCategory.slug === "kronologia" &&
-    isTimelineEvent &&
-    !selectedTimelineId
-  ) {
-    alert("აირჩიე ქრონოლოგია");
-    return;
-  }
-
-  const parentId =
-    selectedCategory.slug === "kronologia" && isTimelineEvent
-      ? selectedTimelineId
-      : null;
-
-  if (editingId) {
-    await updateDoc(doc(db, "notes", editingId), {
-      title: newNote.title,
-      text: newNote.text,
-      category: selectedCategory.slug,
-      parentId,
-    });
-
-    setNotes((prev) =>
-      prev.map((n) =>
-        n.id === editingId
-          ? {
-              ...n,
-              title: newNote.title,
-              text: newNote.text,
-              category: selectedCategory.slug,
-              parentId,
-            }
-          : n
-      )
-    );
-  } else {
-    const siblings = notes.filter((n) => n.parentId === parentId);
-
-    await addDoc(collection(db, "notes"), {
-      title: newNote.title,
-      text: newNote.text,
-      category: selectedCategory.slug,
-      parentId,
-      order: siblings.length,
-      createdAt: new Date(),
-    });
-  }
-
-  setNewNote({ title: "", text: "" });
-  setEditingId(null);
-  setIsTimelineEvent(false);
-  setSelectedTimelineId("");
-};
-
-  const handleEdit = (note) => {
-  setEditingId(note.id);
-  setNewNote({
-    title: note.title || "",
-    text: note.text || "",
-  });
-
-  if (selectedCategory?.slug === "kronologia") {
-    if (note.parentId) {
-      setIsTimelineEvent(true);
-      setSelectedTimelineId(note.parentId);
-    } else {
-      setIsTimelineEvent(false);
-      setSelectedTimelineId("");
+      if (selectedCategory.slug === "kronologia") {
+        setTimelineContainers(items.filter((n) => !n.parentId));
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-  }
-};
-
-  /* ---------------- DELETE ---------------- */
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("წაშლა გინდა?")) return;
-    await deleteDoc(doc(db, "notes", id));
-    setNotes((prev) => prev.filter((n) => n.id !== id));
   };
 
-  const visibleNotes =
-    selectedCategory?.slug === "kronologia"
-      ? notes.filter((n) => !n.parentId) // containers only
-      : notes;
+  useEffect(() => {
+    fetchNotes();
+    resetForms();
+  }, [selectedCategory]);
 
-  // ✅ ids for SortableContext
-  const visibleIds = useMemo(
-    () => visibleNotes.map((n) => n.id),
-    [visibleNotes]
+  const resetForms = () => {
+    setNewNote({ title: "", text: "" });
+    setQuizForm({ question: "", optA: "", optB: "", optC: "", optD: "", correctIndex: 0 });
+    setIsTimelineEvent(false);
+    setSelectedTimelineId("");
+    setIsQuizQuestion(false);
+    setSelectedQuizParentId("");
+    setEditingId(null);
+  };
+
+  /* ---------------- SUBMIT ---------------- */
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedCategory) return;
+
+    let payload = {};
+    let parentId = null;
+
+    if (isTestebi) {
+      if (isQuizQuestion) {
+        if (!selectedQuizParentId) {
+          alert("გთხოვთ აირჩიოთ რომელ ტესტს ეკუთვნის ეს კითხვა");
+          return;
+        }
+        if (!quizForm.question || !quizForm.optA || !quizForm.optB) {
+          alert("კითხვა და მინიმუმ 2 პასუხი სავალდებულოა");
+          return;
+        }
+
+        const options = [
+          `ა) ${quizForm.optA.trim()}`,
+          `ბ) ${quizForm.optB.trim()}`,
+          quizForm.optC ? `გ) ${quizForm.optC.trim()}` : null,
+          quizForm.optD ? `დ) ${quizForm.optD.trim()}` : null,
+        ].filter(Boolean);
+
+        parentId = selectedQuizParentId;
+        payload = {
+          question: quizForm.question.trim(),
+          options,
+          correctIndex: Number(quizForm.correctIndex),
+          category: "testebi",
+          parentId,
+        };
+      } else {
+        // Creating the Test Card Container itself (e.g., "N1", "N2")
+        payload = {
+          title: newNote.title.trim(),
+          category: "testebi",
+          parentId: null,
+        };
+      }
+    } else {
+      // Non-testebi categories
+      if (selectedCategory.slug === "kronologia" && isTimelineEvent && !selectedTimelineId) {
+        alert("გთხოვთ აირჩიოთ ქრონოლოგიის მშობელი თემა");
+        return;
+      }
+      parentId =
+        selectedCategory.slug === "kronologia" && isTimelineEvent
+          ? selectedTimelineId
+          : null;
+
+      payload = {
+        title: newNote.title.trim(),
+        text: newNote.text.trim(),
+        category: selectedCategory.slug,
+        parentId,
+      };
+    }
+
+    try {
+      if (editingId) {
+        await updateDoc(doc(db, "notes", editingId), payload);
+        setNotes((prev) =>
+          prev.map((n) => (n.id === editingId ? { ...n, ...payload } : n))
+        );
+      } else {
+        const siblings = notes.filter((n) => n.parentId === parentId);
+        const newDocRef = await addDoc(collection(db, "notes"), {
+          ...payload,
+          order: siblings.length,
+          createdAt: new Date(),
+        });
+
+        setNotes((prev) => [
+          ...prev,
+          { id: newDocRef.id, ...payload, order: siblings.length },
+        ]);
+      }
+      resetForms();
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("შენახვისას მოხდა შეცდომა.");
+    }
+  };
+
+  /* ---------------- EDIT HANDLER ---------------- */
+
+  const handleEdit = (note) => {
+    setEditingId(note.id);
+
+    if (isTestebi) {
+      if (note.parentId) {
+        setIsQuizQuestion(true);
+        setSelectedQuizParentId(note.parentId);
+        const cleanOpt = (opt) => (opt ? opt.replace(/^[ა-ჰ]\)\s*/, "") : "");
+        setQuizForm({
+          question: note.question || "",
+          optA: cleanOpt(note.options?.[0]),
+          optB: cleanOpt(note.options?.[1]),
+          optC: cleanOpt(note.options?.[2]),
+          optD: cleanOpt(note.options?.[3]),
+          correctIndex: note.correctIndex ?? 0,
+        });
+      } else {
+        setIsQuizQuestion(false);
+        setNewNote({ title: note.title || "", text: "" });
+      }
+    } else {
+      setNewNote({
+        title: note.title || "",
+        text: note.text || "",
+      });
+      if (selectedCategory?.slug === "kronologia") {
+        if (note.parentId) {
+          setIsTimelineEvent(true);
+          setSelectedTimelineId(note.parentId);
+        } else {
+          setIsTimelineEvent(false);
+          setSelectedTimelineId("");
+        }
+      }
+    }
+  };
+
+  /* ---------------- DELETE HANDLER ---------------- */
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("ნამდვილად გსურთ წაშლა?")) return;
+    try {
+      await deleteDoc(doc(db, "notes", id));
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("წაშლა ვერ მოხერხდა.");
+    }
+  };
+
+  // Test cards (Containers) that can hold questions
+  const quizContainers = useMemo(
+    () => notes.filter((n) => isTestebi && !n.parentId),
+    [notes, isTestebi]
   );
 
-  /* ---------------- DRAG END (SAVE ORDER) ---------------- */
+  const visibleNotes = useMemo(() => {
+    if (selectedCategory?.slug === "kronologia" || isTestebi) {
+      return notes.filter((n) => !n.parentId);
+    }
+    return notes;
+  }, [notes, selectedCategory, isTestebi]);
+
+  const visibleIds = useMemo(() => visibleNotes.map((n) => n.id), [visibleNotes]);
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
@@ -262,27 +341,17 @@ const Dashboard = () => {
     const newIndex = visibleNotes.findIndex((n) => n.id === over.id);
     if (oldIndex < 0 || newIndex < 0) return;
 
-    // Reorder ONLY what is visible
     const movedVisible = arrayMove(visibleNotes, oldIndex, newIndex);
-
-    // Normalize orders to 1..N (fixes duplicates)
     const normalizedVisible = movedVisible.map((n, i) => ({
       ...n,
       order: i + 1,
     }));
 
-    // Update local notes state without breaking the rest:
-    // - if kronologia: reorder containers only, keep timeline events as-is
-    // - else: reorder whole list (same as visible)
     setNotes((prev) => {
-      if (selectedCategory?.slug === "kronologia") {
-        const children = prev.filter((n) => n.parentId); // events
-        return [...normalizedVisible, ...children];
-      }
-      return normalizedVisible;
+      const children = prev.filter((n) => n.parentId);
+      return [...normalizedVisible, ...children];
     });
 
-    // Persist only visible items (containers for kronologia, all for others)
     try {
       const batch = writeBatch(db);
       normalizedVisible.forEach((n) => {
@@ -290,44 +359,77 @@ const Dashboard = () => {
       });
       await batch.commit();
     } catch (err) {
-      console.error("Failed to save order:", err);
-      alert("ვერ შევინახე დალაგება (order). სცადე თავიდან.");
+      console.error("Order save error:", err);
+      alert("თანმიმდევრობის შენახვა ვერ მოხერხდა.");
     }
   };
-
-  /* ---------------- RENDER ---------------- */
 
   return (
     <div className="dashboard-container">
       {!selectedCategory ? (
-        <>
-          <h1>აირჩიე კატეგორია</h1>
-          <div className="category-list">
+        <div className="category-selection-view">
+          <h1>მართვის პანელი (Admin Dashboard)</h1>
+          <p className="dashboard-subtitle">აირჩიეთ კატეგორია მასალის სამართავად</p>
+          <div className="category-grid">
             {categories.map((c) => (
               <button
                 key={c.id}
-                className="category-button"
+                className="category-btn-card"
                 onClick={() => setSelectedCategory(c)}
               >
                 {c.name}
               </button>
             ))}
           </div>
-        </>
+        </div>
       ) : (
-        <>
-          <button
-            className="back-button"
-            onClick={() => setSelectedCategory(null)}
-          >
-            ← დაბრუნება
-          </button>
+        <div className="category-manage-view">
+          <div className="header-row">
+            <button className="btn-back" onClick={() => setSelectedCategory(null)}>
+              ← კატეგორიებში დაბრუნება
+            </button>
+            <h2>{selectedCategory.name}</h2>
+          </div>
 
-          <h2>{selectedCategory.name}</h2>
+          <form onSubmit={handleSubmit} className="admin-form-card">
+            <h3>{editingId ? "ჩანაწერის რედაქტირება" : "ახალი ჩანაწერის დამატება"}</h3>
 
-          <form onSubmit={handleAddNote} className="dashboard-form">
+            {/* Testebi Toggle */}
+            {isTestebi && (
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={isQuizQuestion}
+                    onChange={(e) => {
+                      setIsQuizQuestion(e.target.checked);
+                      setSelectedQuizParentId("");
+                    }}
+                  />
+                  ტესტის კითხვა (დაამატე კითხვა არსებულ ბარათში)
+                </label>
+
+                {isQuizQuestion && (
+                  <select
+                    className="form-input"
+                    value={selectedQuizParentId}
+                    onChange={(e) => setSelectedQuizParentId(e.target.value)}
+                    required
+                  >
+                    <option value="">აირჩიეთ ტესტის ბარათი (მაგ: N1)</option>
+                    {quizContainers.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.title}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+
+            {/* If Kronologia Toggle */}
             {selectedCategory.slug === "kronologia" && (
-              <div>
+              <div className="form-group checkbox-group">
                 <label>
                   <input
                     type="checkbox"
@@ -336,12 +438,13 @@ const Dashboard = () => {
                       setIsTimelineEvent(e.target.checked);
                       setSelectedTimelineId("");
                     }}
-                  />{" "}
-                  ქრონოლოგიის მოვლენა
+                  />
+                  ქრონოლოგიის მოვლენა (შვილობილი ჩანაწერი)
                 </label>
 
                 {isTimelineEvent && (
                   <select
+                    className="form-input"
                     value={selectedTimelineId}
                     onChange={(e) => setSelectedTimelineId(e.target.value)}
                     required
@@ -357,53 +460,152 @@ const Dashboard = () => {
               </div>
             )}
 
-            <input
-              type="text"
-              placeholder="სათაური"
-              value={newNote.title}
-              onChange={(e) =>
-                setNewNote({ ...newNote, title: e.target.value })
-              }
-              required
-            />
+            {/* If entering a Quiz Question */}
+            {isTestebi && isQuizQuestion ? (
+              <div className="quiz-fields">
+                <div className="form-group">
+                  <label>კითხვა:</label>
+                  <textarea
+                    className="form-input"
+                    rows="2"
+                    placeholder="მაგ: რომელი იყო შუამდინარეთის რელიგიური ცენტრი?"
+                    value={quizForm.question}
+                    onChange={(e) => setQuizForm({ ...quizForm, question: e.target.value })}
+                    required
+                  />
+                </div>
 
-            <textarea
-              placeholder="ტექსტი"
-              value={newNote.text}
-              onChange={(e) =>
-                setNewNote({ ...newNote, text: e.target.value })
-              }
-            />
+                <div className="form-row-2">
+                  <div className="form-group">
+                    <label>პასუხი ა:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={quizForm.optA}
+                      onChange={(e) => setQuizForm({ ...quizForm, optA: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>პასუხი ბ:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={quizForm.optB}
+                      onChange={(e) => setQuizForm({ ...quizForm, optB: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
 
-            <button type="submit">დამატება</button>
+                <div className="form-row-2">
+                  <div className="form-group">
+                    <label>პასუხი გ:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={quizForm.optC}
+                      onChange={(e) => setQuizForm({ ...quizForm, optC: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>პასუხი დ:</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={quizForm.optD}
+                      onChange={(e) => setQuizForm({ ...quizForm, optD: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>სწორი პასუხი:</label>
+                  <select
+                    className="form-input"
+                    value={quizForm.correctIndex}
+                    onChange={(e) => setQuizForm({ ...quizForm, correctIndex: Number(e.target.value) })}
+                  >
+                    <option value={0}>ა (ვარიანტი 1)</option>
+                    <option value={1}>ბ (ვარიანტი 2)</option>
+                    <option value={2}>გ (ვარიანტი 3)</option>
+                    <option value={3}>დ (ვარიანტი 4)</option>
+                  </select>
+                </div>
+              </div>
+            ) : (
+              /* If creating standard note or test container card */
+              <>
+                <div className="form-group">
+                  <label>{isTestebi ? "ტესტის ბარათის სახელი (მაგ: N1, ძველი ეგვიპტე):" : "სათაური:"}</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder={isTestebi ? "მაგ: N1" : "ჩანაწერის სათაური"}
+                    value={newNote.title}
+                    onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                    required
+                  />
+                </div>
+
+                {!isTestebi && (
+                  <div className="form-group">
+                    <label>ტექსტი / აღწერა:</label>
+                    <textarea
+                      className="form-input"
+                      rows="4"
+                      placeholder="ჩანაწერის შინაარსი..."
+                      value={newNote.text}
+                      onChange={(e) => setNewNote({ ...newNote, text: e.target.value })}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className="form-actions">
+              <button type="submit" className="btn-primary">
+                {editingId ? "შენახვა" : "დამატება"}
+              </button>
+              {editingId && (
+                <button type="button" className="btn-secondary" onClick={resetForms}>
+                  გაუქმება
+                </button>
+              )}
+            </div>
           </form>
 
-          {/* ✅ Wrapped your list with DnD without changing your structure */}
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={visibleIds}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="notes-list">
-                {visibleNotes.map((note) => (
-                  <SortableNoteItem
-                    key={note.id}
-                    note={note}
-                    onDelete={handleDelete}
-                    onEdit={handleEdit}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        </>
+          {/* List Section */}
+          <div className="notes-list-section">
+            <h3>{isTestebi ? "ტესტის ბარათები" : "არსებული ჩანაწერები"} ({visibleNotes.length})</h3>
+            {loading ? (
+              <p>იტვირთება...</p>
+            ) : visibleNotes.length === 0 ? (
+              <p className="empty-text">ჩანაწერები არ მოიძებნა.</p>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={visibleIds} strategy={verticalListSortingStrategy}>
+                  <div className="notes-list">
+                    {visibleNotes.map((note) => (
+                      <SortableNoteItem
+                        key={note.id}
+                        note={note}
+                        isQuizQuestion={false}
+                        onDelete={handleDelete}
+                        onEdit={handleEdit}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
-};
-
-export default Dashboard;
+}
