@@ -222,22 +222,107 @@ export default function Dashboard() {
         };
       }
     } else {
-      // Non-testebi categories
-      if (selectedCategory.slug === "kronologia" && isTimelineEvent && !selectedTimelineId) {
-        alert("გთხოვთ აირჩიოთ ქრონოლოგიის მშობელი თემა");
-        return;
-      }
-      parentId =
-        selectedCategory.slug === "kronologia" && isTimelineEvent
-          ? selectedTimelineId
-          : null;
+      // --- ქრონოლოგია ---
+      if (selectedCategory.slug === "kronologia") {
+        const epochTitle = newNote.title.trim();
+        if (!epochTitle) {
+          alert("გთხოვთ მიუთითოთ ეპოქა (მაგ: ძვ.წ)");
+          return;
+        }
 
+        const lines = newNote.text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
+
+        try {
+          // 1. ვამოწმებთ, არსებობს თუ არა უკვე ეს ეპოქა (მშობელი ბარათი)
+          let parentDoc = notes.find(
+            (n) => !n.parentId && n.category === "kronologia" && n.title === epochTitle
+          );
+          let parentId = parentDoc ? parentDoc.id : null;
+          const newAddedNotes = [];
+
+          // თუ ეპოქა ჯერ არ არსებობს, ვქმნით მას
+          if (!parentId) {
+            const parentRef = await addDoc(collection(db, "notes"), {
+              title: epochTitle,
+              category: "kronologia",
+              parentId: null,
+              order: notes.filter((n) => !n.parentId).length,
+              createdAt: new Date(),
+            });
+            parentId = parentRef.id;
+            newAddedNotes.push({
+              id: parentId,
+              title: epochTitle,
+              category: "kronologia",
+              parentId: null,
+            });
+          }
+
+          // 2. თუ ტექსტის ველში ჩაწერილია მოვლენები, ვამატებთ მათ batch-ით
+          if (lines.length > 0) {
+            const batch = writeBatch(db);
+            const existingSiblings = notes.filter((n) => n.parentId === parentId);
+            let orderIndex = existingSiblings.length;
+
+            for (let i = 0; i < lines.length; i += 2) {
+              const eventYear = lines[i];
+              const eventDesc = lines[i + 1] || "";
+
+              const newChildRef = doc(collection(db, "notes"));
+              const childData = {
+                title: eventYear,
+                text: eventDesc,
+                category: "kronologia",
+                parentId: parentId,
+                order: orderIndex,
+                createdAt: new Date(),
+              };
+
+              batch.set(newChildRef, childData);
+              newAddedNotes.push({ id: newChildRef.id, ...childData });
+              orderIndex++;
+            }
+
+            await batch.commit();
+          }
+
+          setNotes((prev) => [...prev, ...newAddedNotes]);
+          resetForms();
+          return;
+        } catch (err) {
+          console.error("Chronology save error:", err);
+          alert("ქრონოლოგიის შენახვისას მოხდა შეცდომა.");
+          return;
+        }
+      }
+
+      // --- დანარჩენი კატეგორიები (კითხვა-პასუხი, კონსპექტები) ---
       payload = {
         title: newNote.title.trim(),
-        text: newNote.text.trim(),
         category: selectedCategory.slug,
-        parentId,
+        parentId: null,
       };
+
+      if (selectedCategory.slug === "pasuxi") {
+        const lines = newNote.text
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        const items = [];
+        for (let i = 0; i < lines.length; i += 2) {
+          items.push({
+            q: lines[i] || "",
+            a: lines[i + 1] || "",
+          });
+        }
+        payload.items = items;
+      } else {
+        payload.text = newNote.text.trim();
+      }
     }
 
     try {
@@ -289,9 +374,17 @@ export default function Dashboard() {
         setNewNote({ title: note.title || "", text: "" });
       }
     } else {
+      // თუ კითხვა-პასუხია, items მასივი ისევ ხაზებად გადავაქციოთ textarea-სთვის
+      let formattedText = note.text || "";
+      if (selectedCategory?.slug === "pasuxi" && Array.isArray(note.items)) {
+        formattedText = note.items
+          .map((item) => `${item.q}\n${item.a}`)
+          .join("\n\n");
+      }
+
       setNewNote({
         title: note.title || "",
-        text: note.text || "",
+        text: formattedText,
       });
       if (selectedCategory?.slug === "kronologia") {
         if (note.parentId) {
@@ -324,12 +417,18 @@ export default function Dashboard() {
     [notes, isTestebi]
   );
 
+  const [timelineFilter, setTimelineFilter] = useState("all");
+
   const visibleNotes = useMemo(() => {
-    if (selectedCategory?.slug === "kronologia" || isTestebi) {
+    if (isTestebi) {
       return notes.filter((n) => !n.parentId);
     }
+    if (selectedCategory?.slug === "kronologia") {
+      if (timelineFilter === "all") return notes;
+      return notes.filter((n) => n.id === timelineFilter || n.parentId === timelineFilter);
+    }
     return notes;
-  }, [notes, selectedCategory, isTestebi]);
+  }, [notes, selectedCategory, isTestebi, timelineFilter]);
 
   const visibleIds = useMemo(() => visibleNotes.map((n) => n.id), [visibleNotes]);
 
@@ -427,39 +526,6 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* If Kronologia Toggle */}
-            {selectedCategory.slug === "kronologia" && (
-              <div className="form-group checkbox-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isTimelineEvent}
-                    onChange={(e) => {
-                      setIsTimelineEvent(e.target.checked);
-                      setSelectedTimelineId("");
-                    }}
-                  />
-                  ქრონოლოგიის მოვლენა (შვილობილი ჩანაწერი)
-                </label>
-
-                {isTimelineEvent && (
-                  <select
-                    className="form-input"
-                    value={selectedTimelineId}
-                    onChange={(e) => setSelectedTimelineId(e.target.value)}
-                    required
-                  >
-                    <option value="">აირჩიე ქრონოლოგია</option>
-                    {timelineContainers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.title}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            )}
-
             {/* If entering a Quiz Question */}
             {isTestebi && isQuizQuestion ? (
               <div className="quiz-fields">
@@ -536,30 +602,48 @@ export default function Dashboard() {
             ) : (
               /* If creating standard note or test container card */
               <>
-                <div className="form-group">
-                  <label>{isTestebi ? "ტესტის ბარათის სახელი (მაგ: N1, ძველი ეგვიპტე):" : "სათაური:"}</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder={isTestebi ? "მაგ: N1" : "ჩანაწერის სათაური"}
-                    value={newNote.title}
-                    onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                    required
-                  />
-                </div>
+             <div className="form-group">
+  <label>
+    {isTestebi
+      ? "ტესტის ბარათის სახელი (მაგ: N1):"
+      : selectedCategory?.slug === "kronologia"
+      ? "ქრონოლოგიის ეპოქა (მაგ: ძვ.წ ან ახ.წ):"
+      : "სათაური:"}
+  </label>
+  <input
+    type="text"
+    className="form-input"
+    placeholder={
+      selectedCategory?.slug === "kronologia"
+        ? "მაგ: ძვ.წ"
+        : "სათაური"
+    }
+    value={newNote.title}
+    onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+    required
+  />
+</div>
 
-                {!isTestebi && (
-                  <div className="form-group">
-                    <label>ტექსტი / აღწერა:</label>
-                    <textarea
-                      className="form-input"
-                      rows="4"
-                      placeholder="ჩანაწერის შინაარსი..."
-                      value={newNote.text}
-                      onChange={(e) => setNewNote({ ...newNote, text: e.target.value })}
-                    />
-                  </div>
-                )}
+{!isTestebi && (
+  <div className="form-group">
+    <label>
+      {selectedCategory?.slug === "kronologia"
+        ? "მოვლენების სია (თარიღი და მოვლენა ცალ-ცალკე ხაზზე):"
+        : "ტექსტი / აღწერა:"}
+    </label>
+    <textarea
+      className="form-input"
+      rows={selectedCategory?.slug === "kronologia" ? 10 : 4}
+      placeholder={
+        selectedCategory?.slug === "kronologia"
+          ? "ძვ.წ. 3000 წ\nჩრდილოეთ და სამხრეთ ეგვიპტის გაერთიანება ფარაონ მენესის მიერ\n\nძვ.წ. 2600–2150 წწ.\n„პირამიდების ეპოქა“"
+          : "ჩანაწერის შინაარსი..."
+      }
+      value={newNote.text}
+      onChange={(e) => setNewNote({ ...newNote, text: e.target.value })}
+    />
+  </div>
+)}
               </>
             )}
 
